@@ -1,1 +1,131 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Liga Draft MX</title></head><body style="background:black;color:white;font-family:sans-serif;text-align:center;padding:20px"><h1 style="color:#00ff88">Liga Draft MX</h1><p>Tu fantasy ya está funcionando</p><p>Draft en vivo - 90s por turno</p><button style="background:#00ff88;color:black;padding:15px;border-radius:10px;border:0;width:100%;font-weight:bold;font-size:18px" onclick="alert('¡Drafteaste a Henry Martin!')">+ DRAFTEAR Henry Martin</button><p style="margin-top:30px"><a href="#" style="color:#00ff88">⚙️ Panel para editar colores y textos (en la versión completa)</a></p></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liga Draft MX - Fantasy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#00FF88;--bg:#0a0a0a;--card:#171717}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:white}
+.bebas{font-family:'Bebas Neue',sans-serif}
+</style>
+</head>
+<body class="min-h-screen">
+<header class="border-b border-white/10 p-4 flex justify-between items-center sticky top-0 bg-black/90 backdrop-blur z-20">
+<h1 class="bebas text-3xl tracking-wider" id="ligaTitle"><span style="color:var(--primary)">LIGA</span> DRAFT MX</h1>
+<div class="flex gap-2">
+<button onclick="togglePanel()" class="bg-white/10 px-3 py-1.5 rounded-full text-xs">⚙️ EDITAR</button>
+<button id="timerBtn" class="bg-[var(--primary)] text-black px-4 py-1.5 rounded-full font-black text-sm">90s</button>
+</div>
+</header>
+<main class="max-w-6xl mx-auto p-3 grid lg:grid-cols-3 gap-3">
+<div class="lg:col-span-2 space-y-3">
+<div class="bg-[var(--card)] rounded-2xl p-4 border border-white/10">
+<div class="flex justify-between items-center mb-3">
+<h2 class="bebas text-2xl">TURNO DE: <span id="currentTeam" class="text-[var(--primary)]">TIGRES FANS</span></h2>
+<span id="pickInfo" class="text-xs bg-white/10 px-2 py-1 rounded-full">Pick 1.1</span>
+</div>
+<div id="playerPool" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[55vh] overflow-y-auto"></div>
+</div>
+<div class="bg-[var(--card)] rounded-2xl p-4 border border-white/10">
+<h3 class="bebas text-xl mb-2">MI ROSTER</h3>
+<div id="myRoster" class="flex flex-wrap gap-2"></div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="bg-[var(--card)] rounded-2xl p-4 border border-white/10">
+<h3 class="bebas text-xl mb-3">ORDEN DRAFT</h3>
+<div id="draftBoard" class="space-y-1.5"></div>
+</div>
+<div class="bg-[var(--card)] rounded-2xl p-4 border border-white/10">
+<h3 class="bebas text-xl mb-2">POSICIONES</h3>
+<div class="text-xs space-y-1 text-white/60">
+<div>POR x1, DEF x4, MED x4, DEL x2, BANCA x4</div>
+<div id="countInfo" class="text-[var(--primary)] font-bold">Llevas 0 / 15</div>
+</div>
+</div>
+</div>
+</main>
+<div id="editPanel" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 p-4 overflow-y-auto">
+<div class="max-w-md mx-auto bg-[#1e1e1e] rounded-3xl p-5 mt-10 border border-white/20">
+<div class="flex justify-between items-center mb-4">
+<h2 class="bebas text-2xl">⚙️ PANEL DE CONTROL</h2>
+<button onclick="togglePanel()" class="bg-white/10 w-8 h-8 rounded-full">✕</button>
+</div>
+<label class="text-xs opacity-60">Nombre de la liga</label>
+<input id="editTitle" class="w-full bg-black border border-white/20 rounded-xl p-3 mt-1 mb-3" value="LIGA DRAFT MX">
+<label class="text-xs opacity-60">Color principal</label>
+<div class="flex gap-2 mt-1 mb-3">
+<input type="color" id="editColor" value="#00FF88" class="w-12 h-12 rounded-xl bg-transparent">
+<input id="editColorHex" class="flex-1 bg-black border border-white/20 rounded-xl p-3" value="#00FF88">
+</div>
+<label class="text-xs opacity-60">Equipos (separados por coma)</label>
+<textarea id="editTeams" class="w-full bg-black border border-white/20 rounded-xl p-3 mt-1 h-20 text-xs">TIGRES FANS, AMERICA FANS, CHIVAS FANS, CRUZ AZUL FANS, PUMAS FANS, RAYADOS FANS</textarea>
+<button onclick="applyEdits()" class="w-full mt-4 bg-[var(--primary)] text-black font-black py-3 rounded-xl">GUARDAR CAMBIOS</button>
+<p class="text-[10px] opacity-40 text-center mt-3">Los cambios se guardan en tu cel automaticamente</p>
+</div>
+</div>
+<script>
+const jugadores = [
+{ n: "Henry Martin", e: "AME", p: "DEL", pts: 95 },{ n: "Andre-Pierre Gignac", e: "TIG", p: "DEL", pts: 92 },
+{ n: "Sergio Canales", e: "MTY", p: "MED", pts: 90 },{ n: "Guillermo Ochoa", e: "AME", p: "POR", pts: 88 },
+{ n: "Alexis Vega", e: "TOL", p: "DEL", pts: 87 },{ n: "Luis Chavez", e: "PACH", p: "MED", pts: 86 },
+{ n: "Jesus Angulo", e: "TIG", p: "DEF", pts: 85 },{ n: "Uriel Antuna", e: "CAZ", p: "MED", pts: 84 },
+{ n: "Roberto Alvarado", e: "GDL", p: "MED", pts: 83 },{ n: "Cesar Montes", e: "MTY", p: "DEF", pts: 82 },
+{ n: "Diego Lainez", e: "TIG", p: "MED", pts: 81 },{ n: "Erick Sanchez", e: "AME", p: "MED", pts: 80 },
+{ n: "Victor Guzman", e: "GDL", p: "MED", pts: 79 },{ n: "Gonzalo Piovi", e: "CAZ", p: "DEF", pts: 78 },
+{ n: "Carlos Acevedo", e: "SAN", p: "POR", pts: 77 },{ n: "Jordi Cortizo", e: "MTY", p: "MED", pts: 76 },
+];
+let teams = ["TIGRES FANS","AMERICA FANS","CHIVAS FANS","CRUZ AZUL FANS","PUMAS FANS","RAYADOS FANS"];
+let picks = []; let currentPick = 0; let myTeam = []; let timer = 90; let interval;
+function renderPool(){
+ const pool = document.getElementById('playerPool');
+ pool.innerHTML = jugadores.filter(j=>!picks.find(p=>p.n===j.n)).map(j=>`
+  <button onclick="draft('${j.n}')" class="text-left bg-black border border-white/10 rounded-xl p-3 flex justify-between items-center hover:border-[var(--primary)] transition">
+   <div><div class="font-black text-sm">${j.n}</div><div class="text-[10px] opacity-60">${j.e} • ${j.p}</div></div>
+   <div class="bg-white/10 px-2 py-1 rounded-full text-xs font-bold">${j.pts}</div>
+  </button>`).join('');
+}
+function renderBoard(){
+ document.getElementById('draftBoard').innerHTML = teams.map((t,i)=>{
+  const pick = picks[i];
+  return `<div class="flex justify-between text-xs p-2 rounded-lg ${i===currentPick?'bg-[var(--primary)] text-black font-black':'bg-white/5'}"><span>${i+1}. ${t}</span><span>${pick?pick.n:'—'}</span></div>`;
+ }).join('');
+ document.getElementById('currentTeam').innerText = teams[currentPick] || 'DRAFT TERMINADO';
+ document.getElementById('pickInfo').innerText = `Pick ${currentPick+1}.1`;
+ document.getElementById('countInfo').innerText = `Llevas ${myTeam.length} / 15`;
+}
+function renderRoster(){
+ document.getElementById('myRoster').innerHTML = myTeam.length?myTeam.map(j=>`<span class="bg-[var(--primary)] text-black text-xs font-black px-3 py-1.5 rounded-full">${j.n}</span>`).join(''):'<span class="text-xs opacity-40">Aun no has drafteado</span>';
+}
+function draft(nombre){
+ const j = jugadores.find(x=>x.n===nombre);
+ if(!j) return;
+ picks.push(j);
+ if(teams[currentPick]==="TIGRES FANS") myTeam.push(j);
+ currentPick++; if(currentPick>=teams.length) currentPick=0;
+ timer=90; renderPool(); renderBoard(); renderRoster();
+ if(picks.length>=teams.length*2){ clearInterval(interval); document.getElementById('timerBtn').innerText='FIN'; }
+}
+function startTimer(){
+ interval=setInterval(()=>{ timer--; document.getElementById('timerBtn').innerText=timer+'s'; if(timer<=0){ draft(jugadores.filter(j=>!picks.find(p=>p.n===j.n))[0]?.n); timer=90; } },1000);
+}
+function togglePanel(){ document.getElementById('editPanel').classList.toggle('hidden'); }
+function applyEdits(){
+ const title=document.getElementById('editTitle').value;
+ const color=document.getElementById('editColor').value;
+ document.getElementById('ligaTitle').innerHTML=`<span style="color:${color}">${title.split(' ')[0]||'LIGA'}</span> ${title.split(' ').slice(1).join(' ')}`;
+ document.documentElement.style.setProperty('--primary',color);
+ teams=document.getElementById('editTeams').value.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean);
+ localStorage.setItem('liga_cfg',JSON.stringify({title,color,teams}));
+ picks=[]; currentPick=0; myTeam=[]; renderPool(); renderBoard(); renderRoster();
+ togglePanel();
+}
+document.getElementById('editColor').addEventListener('input',e=>document.getElementById('editColorHex').value=e.target.value);
+(function load(){ const cfg=JSON.parse(localStorage.getItem('liga_cfg')||'null'); if(cfg){ document.getElementById('editTitle').value=cfg.title; document.getElementById('editColor').value=cfg.color; document.getElementById('editColorHex').value=cfg.color; document.getElementById('editTeams').value=cfg.teams.join(', '); applyEdits(); } })();
+renderPool(); renderBoard(); renderRoster(); startTimer();
+</script>
+</body>
+</html>
